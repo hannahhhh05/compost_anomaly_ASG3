@@ -1,0 +1,49 @@
+name: Run Anomaly Detection Script and Update Streamlit App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # Specify your required Python version
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        # Add other dependencies if necessary
+
+    - name: Debug requirements
+      run: |
+        pip freeze
+
+    - name: Run multi_target model
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      run: |
+        python anomaly_detect.py
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.name 'hannahhhh05'
+        git config --local user.email 's10243399@connect.np.edu.sg'
+        git add -A
+        git commit -m "Update image data" || exit 0 
+        git fetch origin main
+        git merge origin/main --strategy-option=ours  
+        git push origin main
+    
+    - name: Force push if necessary
+      if: failure()
+      run: |
+        git push origin main --force
